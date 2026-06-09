@@ -23,6 +23,7 @@ import { IInstantiationService } from '../../../instantiation/common/instantiati
 import { ILogService } from '../../../log/common/log.js';
 import { ITelemetryService } from '../../../telemetry/common/telemetry.js';
 import { AgentHostConfigKey, agentHostCustomizationConfigSchema } from '../../common/agentHostCustomizationConfig.js';
+import { AgentHostSandboxConfigKey, sandboxConfigSchema } from '../../common/sandboxConfigSchema.js';
 import { platformSessionSchema } from '../../common/agentHostSchema.js';
 import { AgentSignal } from '../../common/agentService.js';
 import { stripRedundantCdPrefix } from '../../common/commandLineHelpers.js';
@@ -39,6 +40,7 @@ import type { CopilotSessionLaunchPlan, IActiveClientSnapshot, ICopilotSessionLa
 import { buildCopilotSystemNotification } from './copilotSystemNotification.js';
 import { parseLeadingSlashCommand } from './copilotSlashCommandCompletionProvider.js';
 import type { IUnsandboxedCommandConfirmationRequest, ShellManager } from './copilotShellTools.js';
+import { buildSandboxConfigForSdk } from './sandboxConfigForSdk.js';
 import { getEditFilePaths, getInvocationMessage, getPastTenseMessage, getPermissionDisplay, getShellLanguage, getSubagentMetadata, getToolDisplayName, getToolInputString, getToolKind, isEditTool, isHiddenTool, isShellTool, synthesizeSkillToolCall, tryStringify, type ITypedPermissionRequest } from './copilotToolDisplay.js';
 import { FileEditTracker } from '../shared/fileEditTracker.js';
 import { mapSessionEvents } from './mapSessionEvents.js';
@@ -1162,25 +1164,31 @@ export class CopilotAgentSession extends Disposable {
 	}
 
 	/**
-	 * Returns true when our custom shell tool is registered and the
-	 * {@link TerminalSandboxEngine} reports sandboxing is enabled — i.e.
-	 * shell commands run inside the sandbox by default. The shell tool
-	 * prompts on its own when escalating to unsandboxed execution, so the
-	 * SDK's pre-call permission prompt is redundant in that case.
+	 * Returns true when shell commands run inside a sandbox by default — either
+	 * through the AgentHost's own {@link TerminalSandboxEngine} (when the custom
+	 * terminal tool is enabled) or through the SDK's built-in shell tool wrapped
+	 * by the `sandboxConfig` we pushed via `session.options.update`.
 	 *
-	 * Returns false when shell tools are not registered (the SDK's built-in
-	 * terminal runs unsandboxed unless `AgentHostConfigKey.EnableCustomTerminalTool`
-	 * is set)
-	 * so the standard confirmation flow is preserved.
+	 * In both cases the shell tool prompts on its own when escalating to
+	 * unsandboxed execution, so the SDK's pre-call `shell` permission prompt
+	 * is redundant and we auto-approve it.
+	 *
+	 * Returns false when neither sandbox path is configured, so the standard
+	 * confirmation flow is preserved.
 	 */
 	private async _isShellSandboxedByDefault(): Promise<boolean> {
-		if (!this._shellManager) {
-			return false;
+		const customTerminalToolEnabled = this._configurationService.getRootValue(agentHostCustomizationConfigSchema, AgentHostConfigKey.EnableCustomTerminalTool) === true;
+		if (customTerminalToolEnabled) {
+			if (!this._shellManager) {
+				return false;
+			}
+			return this._shellManager.getOrCreateSandboxEngine().isEnabled();
 		}
-		if (this._configurationService.getRootValue(agentHostCustomizationConfigSchema, AgentHostConfigKey.EnableCustomTerminalTool) !== true) {
-			return false;
-		}
-		return this._shellManager.getOrCreateSandboxEngine().isEnabled();
+		// SDK-managed shell path: gate on the same host config that
+		// `CopilotSessionLauncher` reads when forwarding `sandboxConfig` to
+		// the SDK, so the two stay in lock-step.
+		const sandbox = this._configurationService.getRootValue(sandboxConfigSchema, AgentHostSandboxConfigKey.Sandbox);
+		return buildSandboxConfigForSdk(process.platform, sandbox) !== undefined;
 	}
 
 	/**

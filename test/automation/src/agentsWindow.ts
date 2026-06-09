@@ -13,7 +13,6 @@ const SESSION_TYPE_PICKER_VISIBLE = `${SESSION_TYPE_PICKER}:not(.hidden)`;
 const NEW_CHAT_EDITOR = `${NEW_SESSION_VIEW} .sessions-chat-editor .monaco-editor[role="code"]`;
 const SEND_BUTTON_ENABLED = `${NEW_SESSION_VIEW} .sessions-chat-send-button .monaco-button:not(.disabled)`;
 const RESPONSE = `${AGENTS_WORKBENCH} .interactive-item-container.interactive-response`;
-const RESPONSE_COMPLETE = `${RESPONSE}:not(.chat-response-loading)`;
 
 export class AgentsWindow {
 
@@ -165,13 +164,22 @@ export class AgentsWindow {
 	 * Wait until at least one assistant response bubble contains text
 	 * matching the predicate. Returns the matched element's full text
 	 * content.
+	 *
+	 * The text search spans both in-progress (`.chat-response-loading`) and
+	 * completed response bubbles. Matching only completed bubbles is racy:
+	 * the Agents Window keeps prior sessions' (completed) bubbles in the DOM
+	 * while a freshly-started session's reply can still be rendering, so a
+	 * "completed only" search can lock onto a stale prior-session bubble and
+	 * time out even though the current session's reply text is already on
+	 * screen (just not flipped to completed yet). Callers use a unique reply
+	 * string per scenario, so searching in-progress bubbles does not cause
+	 * false positives.
 	 */
 	async waitForAssistantText(predicate: RegExp | string, timeoutMs: number = 60_000): Promise<string> {
 		const retryCount = Math.ceil(timeoutMs / 100);
 		await this.code.waitForElement(RESPONSE, undefined, retryCount);
-		await this.code.waitForElement(RESPONSE_COMPLETE, undefined, retryCount);
 
-		const responseSelector = `${RESPONSE_COMPLETE} .rendered-markdown`;
+		const responseSelector = `${RESPONSE} .rendered-markdown`;
 		const deadline = Date.now() + timeoutMs;
 		let lastTexts: string[] = [];
 		while (Date.now() < deadline) {

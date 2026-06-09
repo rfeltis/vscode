@@ -56,6 +56,24 @@ export const AgentHostAhpJsonlLoggingSettingId = 'chat.agentHost.ahpJsonlLogging
 export const AgentHostCustomTerminalToolEnabledSettingId = 'chat.agentHost.customTerminalTool.enabled';
 
 /**
+ * Configuration key that controls the sandbox mode for the Copilot SDK's built-in
+ * shell tool (the path taken when {@link AgentHostCustomTerminalToolEnabledSettingId}
+ * is `false`). Values mirror {@link AgentSandboxEnabledValue}:
+ *
+ *  - `'off'` (the default): no sandbox policy is forwarded for the SDK shell
+ *    path \u2014 commands run unsandboxed.
+ *  - `'on'`: the Agent Host runs the SDK\u2019s shell tool inside a sandbox
+ *    using the user's `chat.agent.sandbox.fileSystem.*` filesystem policy.
+ *    Outbound network is enforced via the user's allow/deny host lists.
+ *  - `'allowNetwork'`: same as `'on'` but with unrestricted outbound network.
+ *
+ * Has no effect when {@link AgentHostCustomTerminalToolEnabledSettingId} is
+ * `true` \u2014 the host\u2019s own terminal sandbox engine then handles shell
+ * commands and reads `chat.agent.sandbox.enabled` directly.
+ */
+export const AgentHostSdkSandboxEnabledSettingId = 'chat.agentHost.sdkSandbox.enabled';
+
+/**
  * Configuration key that holds the absolute path to a locally-installed
  * `@anthropic-ai/claude-agent-sdk` package. When non-empty, the Claude agent
  * provider is registered inside the agent host and the SDK module is loaded
