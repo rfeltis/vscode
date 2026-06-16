@@ -297,6 +297,10 @@ All commands and UI respect `ChatContextKeys.enabled`.
 |-----------|---------|
 | `aiCustomization.openManagementEditor` | Opens the management editor, optionally accepting an `AICustomizationManagementSection` to deep-link |
 | `aiCustomization.openMarketplace` | Opens the management editor with marketplace browse mode active. Accepts an optional section (`mcpServers` or `plugins`); defaults to `mcpServers` |
+| `sessions.agentSpotlightTour.start` | Demo-only Agents window spotlight tour. Reveals the Customizations sidebar, then highlights Skills and MCP Servers. Available as **Start Onboarding Spotlight Tour** in the Command Palette. |
+| `sessions.agentSpotlightTour.startMcpChangeboardingNudge` | Demo-only Agents window changeboarding nudge. Reveals the Customizations sidebar and marks MCP Servers with a green dot; opening MCP Servers then shows the spotlight, and **Got It** opens the MCP Servers modal. Available as **Start MCP Changeboarding Spotlight Nudge** in the Command Palette. |
+| `sessions.agentQuickStartChecklist.open` | Demo-only Agents window Quick Start checklist. Opens a static bottom-right checklist with 2 of 4 tasks complete. Available as **Open Quick Start Checklist** in the Command Palette. |
+| `sessions.agentChooseMission.open` | Demo-only Agents window Choose Your Mission picker. Opens mission options above the chat input and fills a sample implementation prompt when an option is selected. Available as **Open Choose Your Mission** in the Command Palette. |
 
 ## Settings
 

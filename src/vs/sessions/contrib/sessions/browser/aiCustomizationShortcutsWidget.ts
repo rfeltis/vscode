@@ -26,6 +26,7 @@ import { IEditorService } from '../../../../workbench/services/editor/common/edi
 import { AICustomizationManagementEditor } from '../../../../workbench/contrib/chat/browser/aiCustomization/aiCustomizationManagementEditor.js';
 import { AICustomizationManagementEditorInput } from '../../../../workbench/contrib/chat/browser/aiCustomization/aiCustomizationManagementEditorInput.js';
 import { ISessionsManagementService } from '../../../services/sessions/common/sessionsManagement.js';
+import { registerAgentSpotlightCustomizationsExpander } from './agentSpotlightTour.contribution.js';
 
 const $ = DOM.$;
 
@@ -259,6 +260,13 @@ export class AICustomizationShortcutsWidget extends Disposable {
 		};
 
 		this._renderDisposables.add(headerButton.onDidClick(() => toggleCollapse()));
+		this._renderDisposables.add(registerAgentSpotlightCustomizationsExpander({
+			expand: () => {
+				if (container.classList.contains('collapsed')) {
+					toggleCollapse();
+				}
+			}
+		}));
 	}
 
 	focus(): void {

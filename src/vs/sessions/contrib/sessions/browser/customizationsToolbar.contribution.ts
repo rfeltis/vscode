@@ -10,6 +10,7 @@ import { ThemeIcon } from '../../../../base/common/themables.js';
 import { localize, localize2 } from '../../../../nls.js';
 import { Action2, registerAction2 } from '../../../../platform/actions/common/actions.js';
 import { IActionViewItemService } from '../../../../platform/actions/browser/actionViewItemService.js';
+import { ICommandService } from '../../../../platform/commands/common/commands.js';
 import { ContextKeyExpr, IContextKey, IContextKeyService, RawContextKey } from '../../../../platform/contextkey/common/contextkey.js';
 import { IInstantiationService, ServicesAccessor } from '../../../../platform/instantiation/common/instantiation.js';
 import { IWorkbenchContribution, registerWorkbenchContribution2, WorkbenchPhase } from '../../../../workbench/common/contributions.js';
@@ -21,7 +22,7 @@ import { Menus } from '../../../browser/menus.js';
 import { agentIcon, instructionsIcon, mcpServerIcon, pluginIcon, skillIcon, hookIcon } from '../../../../workbench/contrib/chat/browser/aiCustomization/aiCustomizationIcons.js';
 import { ActionViewItem, IBaseActionViewItemOptions } from '../../../../base/browser/ui/actionbar/actionViewItems.js';
 import { IAction } from '../../../../base/common/actions.js';
-import { $, append } from '../../../../base/browser/dom.js';
+import { $, append, EventHelper } from '../../../../base/browser/dom.js';
 import { autorun } from '../../../../base/common/observable.js';
 import { Button } from '../../../../base/browser/ui/button/button.js';
 import { defaultButtonStyles } from '../../../../platform/theme/browser/defaultStyles.js';
@@ -33,6 +34,7 @@ import { ISessionsManagementService } from '../../../services/sessions/common/se
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
 import { Registry } from '../../../../platform/registry/common/platform.js';
 import { Extensions as ConfigurationExtensions, IConfigurationRegistry } from '../../../../platform/configuration/common/configurationRegistry.js';
+import { consumeAgentMcpChangeboardingNudge, registerAgentMcpChangeboardingIndicator, registerAgentSpotlightTarget } from './agentSpotlightTour.contribution.js';
 
 /**
  * Setting key that controls how the Customizations section in the Agents
@@ -41,6 +43,7 @@ import { Extensions as ConfigurationExtensions, IConfigurationRegistry } from '.
  * This setting is registered (and only meaningful) in the Agents app.
  */
 export const SESSIONS_CUSTOMIZATIONS_SIDEBAR_MODE_SETTING = 'sessions.customizations.sidebarMode';
+const SHOW_MCP_CHANGEBOARDING_SPOTLIGHT_ID = 'sessions.agentSpotlightTour.showMcpChangeboardingSpotlight';
 
 /**
  * Presentation/click behavior for the Customizations section in the Agents sidebar.
@@ -161,6 +164,7 @@ export class CustomizationLinkViewItem extends ActionViewItem {
 		private readonly _config: ICustomizationItemConfig,
 		@IAICustomizationItemsModel private readonly _itemsModel: IAICustomizationItemsModel,
 		@IMcpService private readonly _mcpService: IMcpService,
+		@ICommandService private readonly _commandService: ICommandService,
 	) {
 		super(undefined, action, { ...options, icon: false, label: false });
 		this._viewItemDisposables = this._register(new DisposableStore());
@@ -188,8 +192,19 @@ export class CustomizationLinkViewItem extends ActionViewItem {
 		}));
 		this._button.element.classList.add('customization-link-button', 'sidebar-action-button');
 		this._button.label = `$(${this._config.icon.id}) ${this._config.label}`;
+		this._viewItemDisposables.add(registerAgentSpotlightTarget(this._config.id, this._button.element));
+		if (this._config.isMcp) {
+			const indicator = append(this._button.element, $('span.agent-mcp-changeboarding-indicator.hidden'));
+			indicator.setAttribute('aria-hidden', 'true');
+			this._viewItemDisposables.add(registerAgentMcpChangeboardingIndicator(this._button.element, indicator));
+		}
 
-		this._viewItemDisposables.add(this._button.onDidClick(() => {
+		this._viewItemDisposables.add(this._button.onDidClick(e => {
+			if (this._config.isMcp && consumeAgentMcpChangeboardingNudge()) {
+				EventHelper.stop(e, true);
+				void this._commandService.executeCommand(SHOW_MCP_CHANGEBOARDING_SPOTLIGHT_ID);
+				return;
+			}
 			this._action.run();
 		}));
 

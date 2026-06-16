@@ -97,6 +97,15 @@ export abstract class AbstractChatView extends Disposable implements ISerializab
 	}
 
 	/**
+	 * Returns the element that visually represents this view's chat input. Used by
+	 * lightweight overlays that need to align with the composer without querying
+	 * implementation-specific DOM.
+	 */
+	getInputTargetElement(): HTMLElement | undefined {
+		return undefined;
+	}
+
+	/**
 	 * Submit the given text as a chat query. The default implementation is
 	 * a no-op; subclasses that host an input widget (e.g. `NewChatView`)
 	 * override this.

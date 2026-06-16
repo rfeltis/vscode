@@ -267,6 +267,10 @@ export class SessionView extends Disposable implements ISerializableView {
 		this._currentView.value?.prefillInput(text);
 	}
 
+	getInputTargetElement(): HTMLElement | undefined {
+		return this._currentView.value?.getInputTargetElement();
+	}
+
 	sendQuery(text: string): void {
 		this._currentView.value?.sendQuery(text);
 	}

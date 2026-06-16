@@ -69,6 +69,7 @@ export const enum AccessibilityVerbositySettingId {
 	SourceControl = 'accessibility.verbosity.sourceControl',
 	Find = 'accessibility.verbosity.find',
 	SessionsChat = 'accessibility.verbosity.sessionsChat',
+	AgentSpotlightTour = 'accessibility.verbosity.agentSpotlightTour',
 	ChatQuestionCarousel = 'accessibility.verbosity.chatQuestionCarousel'
 }
 
@@ -209,6 +210,10 @@ const configuration: IConfigurationNode = {
 		},
 		[AccessibilityVerbositySettingId.SessionsChat]: {
 			description: localize('verbosity.sessionsChat', 'Provide information about how to access the Agents window accessibility help menu when the chat input is focused.'),
+			...baseVerbosityProperty
+		},
+		[AccessibilityVerbositySettingId.AgentSpotlightTour]: {
+			description: localize('verbosity.agentSpotlightTour', 'Provide information about how to access the Agents window spotlight tour accessibility help menu when the tour is focused.'),
 			...baseVerbosityProperty
 		},
 		[AccessibilityVerbositySettingId.ChatQuestionCarousel]: {

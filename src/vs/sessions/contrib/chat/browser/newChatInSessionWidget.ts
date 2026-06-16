@@ -174,6 +174,14 @@ export class NewChatInSessionWidget extends Disposable {
 		this._newChatInput.focus();
 	}
 
+	prefillInput(text: string): void {
+		this._newChatInput.prefillInput(text);
+	}
+
+	getInputTargetElement(): HTMLElement | undefined {
+		return this._newChatInput.inputTargetElement;
+	}
+
 	attach(uris: URI[]): void {
 		this._newChatInput.attach(uris);
 	}

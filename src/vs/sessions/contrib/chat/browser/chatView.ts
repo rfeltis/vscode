@@ -73,9 +73,11 @@ export class NewChatView extends AbstractChatView {
 	}
 
 	override prefillInput(text: string): void {
-		if (this._widget instanceof NewChatWidget) {
-			this._widget.prefillInput(text);
-		}
+		this._widget.prefillInput(text);
+	}
+
+	override getInputTargetElement(): HTMLElement | undefined {
+		return this._widget.getInputTargetElement();
 	}
 
 	override sendQuery(text: string): void {
@@ -245,6 +247,15 @@ export class ChatView extends AbstractChatView {
 
 	override focus(): void {
 		this._widget.focusInput();
+	}
+
+	override prefillInput(text: string): void {
+		this._widget.setInput(text);
+		this._widget.focusInput();
+	}
+
+	override getInputTargetElement(): HTMLElement | undefined {
+		return this._widget.inputPart.inputContainerElement ?? this._widget.inputPart.element;
 	}
 
 	override attach(uris: URI[]): void {

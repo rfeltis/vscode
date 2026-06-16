@@ -35,6 +35,7 @@ export class NewChatWidget extends Disposable {
 	private readonly _workspacePicker: WorkspacePicker;
 	private readonly _newChatInput: NewChatInputWidget;
 	private _aquariumToggle: IMountedToggleHandle | undefined;
+	private _inputStackElement: HTMLElement | undefined;
 
 	/** Recreates the draft once a better/late-registering provider can serve the folder (see {@link _createNewSession}). */
 	private readonly _pendingPreferredUpgrade = new MutableDisposable<IDisposable>();
@@ -138,7 +139,7 @@ export class NewChatWidget extends Disposable {
 	render(parent: HTMLElement): void {
 		const element = dom.append(parent, dom.$('.sessions-chat-widget'));
 		const chatWidgetContainer = dom.append(element, dom.$('.new-chat-widget-container'));
-		const chatWidgetContent = dom.append(chatWidgetContainer, dom.$('.new-chat-widget-content'));
+		const chatWidgetContent = this._inputStackElement = dom.append(chatWidgetContainer, dom.$('.new-chat-widget-content'));
 
 		this._aquariumToggle = this._register(this.aquariumService.mountToggle(element));
 
@@ -469,6 +470,10 @@ export class NewChatWidget extends Disposable {
 
 	prefillInput(text: string): void {
 		this._newChatInput.prefillInput(text);
+	}
+
+	getInputTargetElement(): HTMLElement | undefined {
+		return this._inputStackElement ?? this._newChatInput.inputTargetElement;
 	}
 
 	setHostVisible(visible: boolean): void {

@@ -36,6 +36,7 @@ export class SessionsChatAccessibilityHelp implements IAccessibleViewImplementat
 		content.push(localize('sessionsChat.filesView', "Focus the Files Explorer view{0}.", '<keybinding:workbench.action.agentSessions.focusChangesFileView>'));
 		content.push(localize('sessionsChat.sessionsView', "Focus the Chat Sessions view{0}.", '<keybinding:workbench.action.chat.focusAgentSessionsViewer>'));
 		content.push(localize('sessionsChat.customizations', "Focus the Chat Customizations view{0}.", `<keybinding:${FOCUS_AI_CUSTOMIZATION_VIEW_ID}>`));
+		content.push(localize('sessionsChat.spotlightTour', "Run Start Onboarding Spotlight Tour, Start MCP Changeboarding Spotlight Nudge, Open Quick Start Checklist, or Open Choose Your Mission from the Command Palette to start an onboarding demo. The MCP nudge marks MCP Servers with a green dot; open MCP Servers to show the spotlight."));
 
 		return new AccessibleContentProvider(
 			AccessibleViewProviderId.SessionsChat,

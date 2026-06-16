@@ -107,6 +107,24 @@
 	position: relative;
 }
 
+.ai-customization-toolbar .agent-mcp-changeboarding-indicator {
+	flex: 0 0 auto;
+	width: 8px;
+	height: 8px;
+	margin-left: 2px;
+	border-radius: 50%;
+	background: var(--vscode-testing-iconPassed, #73c991);
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--vscode-testing-iconPassed, #73c991) 22%, transparent);
+}
+
+.ai-customization-toolbar .agent-mcp-changeboarding-indicator.hidden {
+	display: none;
+}
+
+.ai-customization-toolbar .customization-link-button.agent-mcp-changeboarding-armed {
+	color: var(--vscode-foreground);
+}
+
 /* Icons use the standard icon foreground color. */
 .ai-customization-toolbar .customization-link-button .codicon {
 	color: var(--vscode-icon-foreground) !important;

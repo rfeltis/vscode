@@ -132,9 +132,12 @@ export class NewChatInputWidget extends Disposable implements IHistoryNavigation
 	/** The underlying input editor. Exposed for component fixtures. */
 	get inputEditor(): CodeEditorWidget | undefined { return this._editor; }
 
+	get inputTargetElement(): HTMLElement | undefined { return this._inputArea ?? this._editorContainer; }
+
 	// Input
 	private _editor!: CodeEditorWidget;
 	private _editorContainer!: HTMLElement;
+	private _inputArea: HTMLElement | undefined;
 
 	// Send button
 	private _sendButton: Button | undefined;
@@ -248,7 +251,7 @@ export class NewChatInputWidget extends Disposable implements IHistoryNavigation
 		this._register(this.sessionTypePicker.onDidSelectSessionType(() => notificationWidget.rerender()));
 
 		// Input area inside the input slot
-		const inputArea = dom.append(chatInputContainer, dom.$('.new-chat-input-area'));
+		const inputArea = this._inputArea = dom.append(chatInputContainer, dom.$('.new-chat-input-area'));
 
 		// Attachments row (pills only) inside input area, above editor
 		const attachRow = dom.append(inputArea, dom.$('.sessions-chat-attach-row'));
