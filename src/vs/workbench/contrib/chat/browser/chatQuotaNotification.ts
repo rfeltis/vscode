@@ -80,7 +80,6 @@ export class ChatQuotaNotificationContribution extends Disposable implements IWo
 	private _prevWeeklyPercentUsed: number | undefined;
 	private _trajectoryNudgeEnabled = false;
 	private _trajectoryTreatmentInitialized = false;
-	private _lastLoggedTrajectoryShownSignature: string | undefined;
 	private _activeTrajectoryTelemetryData: ChatQuotaTrajectoryNudgeEvent | undefined;
 
 	constructor(
@@ -104,7 +103,6 @@ export class ChatQuotaNotificationContribution extends Disposable implements IWo
 			}
 			if (this._activeTrajectoryTelemetryData) {
 				this._logQuotaTrajectoryNudgeClosed(this._activeTrajectoryTelemetryData);
-				this._storeTrajectoryShown();
 			}
 			this._activeTrajectoryTelemetryData = undefined;
 		}));
@@ -249,8 +247,6 @@ export class ChatQuotaNotificationContribution extends Disposable implements IWo
 			this._showRateLimitWarning(rateLimitWarning);
 			return;
 		}
-
-		this._captureNotificationBaselines();
 	}
 
 	// --- Threshold crossing detection ----------------------------------------
@@ -275,7 +271,6 @@ export class ChatQuotaNotificationContribution extends Disposable implements IWo
 			this._prevQuotaPercentUsed = undefined;
 			return undefined;
 		}
-
 		const percentUsed = 100 - snapshot.percentRemaining;
 		const crossed = this._findCrossedThreshold(percentUsed, this._prevQuotaPercentUsed);
 		this._prevQuotaPercentUsed = percentUsed;
@@ -347,24 +342,13 @@ export class ChatQuotaNotificationContribution extends Disposable implements IWo
 
 	private async _handleCreditEfficiencyLearnMoreCommand(accessor: ServicesAccessor): Promise<void> {
 		if (this._activeTrajectoryTelemetryData) {
-			this._handleQuotaTrajectoryNudgeLinkClicked(this._activeTrajectoryTelemetryData);
+			this._logQuotaTrajectoryNudgeLinkClicked(this._activeTrajectoryTelemetryData);
+			queueMicrotask(() => this._hideNotification());
 		}
 		await accessor.get(IOpenerService).open(URI.parse(CREDIT_EFFICIENCY_LEARN_MORE_URL));
 	}
 
-	private _handleQuotaTrajectoryNudgeLinkClicked(data: ChatQuotaTrajectoryNudgeEvent): void {
-		this._logQuotaTrajectoryNudgeLinkClicked(data);
-		this._storeTrajectoryShown();
-		queueMicrotask(() => this._hideNotification());
-	}
-
 	private _logQuotaTrajectoryNudgeShown(data: ChatQuotaTrajectoryNudgeEvent): void {
-		const resetPeriod = this._getTrajectoryPeriodKey();
-		const signature = resetPeriod ?? 'unknown';
-		if (signature === this._lastLoggedTrajectoryShownSignature) {
-			return;
-		}
-		this._lastLoggedTrajectoryShownSignature = signature;
 		this._telemetryService.publicLog2<ChatQuotaTrajectoryNudgeEvent, ChatQuotaTrajectoryNudgeClassification>('chatQuotaTrajectoryNudgeShown', data);
 	}
 
@@ -644,5 +628,4 @@ export class ChatQuotaNotificationContribution extends Disposable implements IWo
 		this._activeTrajectoryTelemetryData = undefined;
 		this._chatInputNotificationService.deleteNotification(QUOTA_NOTIFICATION_ID);
 	}
-
 }
