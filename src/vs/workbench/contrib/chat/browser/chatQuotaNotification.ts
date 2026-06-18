@@ -117,6 +117,7 @@ export class ChatQuotaNotificationContribution extends Disposable implements IWo
 			}
 		}));
 
+		// Check initial state in case quota is already exhausted at startup
 		this._update();
 	}
 
