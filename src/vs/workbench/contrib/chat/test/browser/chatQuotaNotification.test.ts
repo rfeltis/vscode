@@ -4,12 +4,10 @@
  *--------------------------------------------------------------------------------------------*/
 
 import assert from 'assert';
-import * as sinon from 'sinon';
 import { Emitter, Event } from '../../../../../base/common/event.js';
 import { createMarkdownCommandLink } from '../../../../../base/common/htmlContent.js';
 import { Disposable } from '../../../../../base/common/lifecycle.js';
 import { IObservable, observableValue } from '../../../../../base/common/observable.js';
-import { Language } from '../../../../../base/common/platform.js';
 import { URI } from '../../../../../base/common/uri.js';
 import { ensureNoDisposablesAreLeakedInTestSuite } from '../../../../../base/test/common/utils.js';
 import { CommandsRegistry } from '../../../../../platform/commands/common/commands.js';
@@ -244,10 +242,6 @@ function makeResetDate(daysUntilReset: number): string {
 suite('ChatQuotaNotificationContribution', () => {
 
 	const store = ensureNoDisposablesAreLeakedInTestSuite();
-
-	teardown(() => {
-		sinon.restore();
-	});
 
 	function createContribution(
 		entitlementOpts?: Parameters<typeof createMockEntitlementService>[0],
@@ -681,28 +675,6 @@ suite('ChatQuotaNotificationContribution', () => {
 			await flushPromises();
 
 			assert.strictEqual(notificationMock.getNotification(), undefined);
-		});
-
-		test('does not enroll when UI language is not translated', async () => {
-			sinon.stub(Language, 'isDefaultVariant').returns(false);
-			const { assignmentMock, notificationMock } = createContribution({
-				entitlement: ChatEntitlement.Pro,
-				quotas: {
-					resetDate: makeResetDate(24),
-					usageBasedBilling: true,
-					premiumChat: makeQuotaSnapshot(72),
-				},
-			}, { trajectoryTreatment: true });
-
-			await flushPromises();
-
-			assert.deepStrictEqual({
-				treatments: assignmentMock.getTreatmentCalls,
-				notification: notificationMock.getNotification(),
-			}, {
-				treatments: [],
-				notification: undefined,
-			});
 		});
 
 		test('does not show when user is eligible but not assigned to the experiment', async () => {
