@@ -152,7 +152,9 @@ export class ChatQuotaNotificationContribution extends Disposable implements IWo
 		if (treatment !== undefined) {
 			this._logQuotaTrajectoryNudgeEnrolled(treatment, warning);
 		}
-		this._update();
+		if (treatment === true) {
+			this._update();
+		}
 	}
 
 	private _getRelevantSnapshot(): IQuotaSnapshot | undefined {
@@ -348,7 +350,7 @@ export class ChatQuotaNotificationContribution extends Disposable implements IWo
 		this._setNotification({
 			id: QUOTA_NOTIFICATION_ID,
 			severity: ChatInputNotificationSeverity.Info,
-			message: new MarkdownString(localize({ key: 'quota.trajectory.message', comment: ['{Locked="]({0})"}'] }, "Based on recent usage, your monthly allowance may run out before it resets. {0}", learnMoreLink), { isTrusted: { enabledCommands: [TRAJECTORY_NUDGE_SPEC.learnMoreCommandId] } }),
+			message: new MarkdownString(localize({ key: 'quota.trajectory.message', comment: ['{Locked="["}', '{Locked="]({0})"}'] }, "Based on recent usage, your monthly allowance may run out before it resets. {0}", learnMoreLink), { isTrusted: { enabledCommands: [TRAJECTORY_NUDGE_SPEC.learnMoreCommandId] } }),
 			description: undefined,
 			actions: [],
 			dismissible: true,
