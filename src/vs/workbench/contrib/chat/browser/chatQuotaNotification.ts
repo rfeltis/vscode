@@ -58,6 +58,14 @@ type ChatQuotaTrajectoryNudgeEnrollmentClassification = {
 };
 
 /**
+ * Persisted flag remembering that the user dismissed the quota-exceeded
+ * notification. Kept until quota recovers (credit becomes available again) so
+ * the banner does not re-appear on every window reload while quota is still
+ * exhausted.
+ */
+const QUOTA_EXHAUSTED_DISMISSED_STORAGE_KEY = 'chat.quotaNotification.exhaustedDismissed';
+
+/**
  * Core-side workbench contribution that shows chat input notifications for
  * quota exhaustion and quota-approaching thresholds.
  *
@@ -114,6 +122,15 @@ export class ChatQuotaNotificationContribution extends Disposable implements IWo
 			}
 		}));
 
+		// Remember when the user dismisses the quota-exceeded notification so it
+		// does not re-appear on the next window reload while quota is still
+		// exhausted. The flag is cleared from `_update` once quota recovers.
+		this._register(this._chatInputNotificationService.onDidDismiss(id => {
+			if (id === QUOTA_NOTIFICATION_ID && this._showingExhausted) {
+				this._setExhaustedDismissed();
+			}
+		}));
+
 		// Check initial state in case quota is already exhausted at startup
 		this._update();
 	}
@@ -134,12 +151,7 @@ export class ChatQuotaNotificationContribution extends Disposable implements IWo
 		const treatment = await this._assignmentService.getTreatment<boolean>(TRAJECTORY_NUDGE_SPEC.treatment);
 		this._trajectoryTreatment = treatment;
 		if (treatment !== undefined) {
-			this._telemetryService.publicLog2<ChatQuotaTrajectoryNudgeEnrollmentEvent, ChatQuotaTrajectoryNudgeEnrollmentClassification>('chatQuotaTrajectoryNudgeEnrolled', {
-				treatment,
-				entitlement: ChatEntitlement[this._chatEntitlementService.entitlement],
-				averageDailyUsage: Math.round(warning.averageDailyUsage * 100) / 100,
-				percentUsed: Math.round(warning.percentUsed * 100) / 100,
-			});
+			this._logQuotaTrajectoryNudgeEnrolled(treatment, warning);
 		}
 		this._update();
 	}
@@ -172,6 +184,16 @@ export class ChatQuotaNotificationContribution extends Disposable implements IWo
 		const entitlement = this._chatEntitlementService.entitlement;
 		const isCopilot = this._isCopilotModelSelected();
 
+		// Once quota recovers (credit is positively available again) drop any
+		// persisted dismissal so the quota-exceeded notification can show the next
+		// time quota runs out. Done before the Copilot/BYOK gate so a recovery is
+		// always observed, even while a BYOK model is selected. Guarded on a
+		// present snapshot so the transient "no quota data yet" state at
+		// startup/reload does not wipe the flag.
+		if (this._isQuotaKnownAvailable()) {
+			this._clearExhaustedDismissed();
+		}
+
 		// Defer new notifications when a BYOK model is selected or the model
 		// selection hasn't loaded yet — quota only applies to Copilot models.
 		// Already-shown notifications stay visible.
@@ -186,7 +208,9 @@ export class ChatQuotaNotificationContribution extends Disposable implements IWo
 		// authoritative signal that the org has exceeded its budget, regardless of
 		// overages or remaining quota.
 		if (this._isManagedPlan(entitlement) && this._isManagedPlanBlocked()) {
-			this._showManagedPlanBlockedNotification();
+			if (!this._isExhaustedDismissed()) {
+				this._showManagedPlanBlockedNotification();
+			}
 			return;
 		}
 
@@ -197,14 +221,16 @@ export class ChatQuotaNotificationContribution extends Disposable implements IWo
 			const wasAdditionalUsageEnabled = this._prevAdditionalUsageEnabled;
 			this._prevAdditionalUsageEnabled = additionalUsageEnabled;
 
-			if (additionalUsageEnabled) {
-				// Show overage notification on a live transition to 100%,
-				// or when overages are enabled while already at 100%.
-				if (this._prevQuotaPercentUsed !== undefined || wasAdditionalUsageEnabled === false) {
-					this._showOverageActivationNotification();
+			if (!this._isExhaustedDismissed()) {
+				if (additionalUsageEnabled) {
+					// Show overage notification on a live transition to 100%,
+					// or when overages are enabled while already at 100%.
+					if (this._prevQuotaPercentUsed !== undefined || wasAdditionalUsageEnabled === false) {
+						this._showOverageActivationNotification();
+					}
+				} else {
+					this._showExhaustedNotification();
 				}
-			} else {
-				this._showExhaustedNotification();
 			}
 
 			// Keep the baseline up-to-date so that recovery from exhaustion
@@ -265,6 +291,10 @@ export class ChatQuotaNotificationContribution extends Disposable implements IWo
 
 	private _computeQuotaTrajectoryWarning(): { averageDailyUsage: number; percentUsed: number } | undefined {
 		if (!this._isTrajectoryEligibleEntitlement() || this._isTrajectoryShownInCurrentPeriod()) {
+			return undefined;
+		}
+
+		if (!Language.isDefaultVariant()) {
 			return undefined;
 		}
 
@@ -598,5 +628,29 @@ export class ChatQuotaNotificationContribution extends Disposable implements IWo
 	private _hideNotification(): void {
 		this._showingExhausted = false;
 		this._chatInputNotificationService.deleteNotification(QUOTA_NOTIFICATION_ID);
+	}
+
+	// --- Exhausted dismissal persistence ------------------------------------
+
+	/**
+	 * Returns `true` only when there is an actual quota snapshot indicating that
+	 * credit is available (i.e. quota is not used up). Returns `false` when no
+	 * snapshot has loaded yet, so the transient "no data" state at startup/reload
+	 * is not mistaken for recovery.
+	 */
+	private _isQuotaKnownAvailable(): boolean {
+		return !!this._getRelevantSnapshot() && !this._isQuotaUsedUp();
+	}
+
+	private _isExhaustedDismissed(): boolean {
+		return this._storageService.getBoolean(QUOTA_EXHAUSTED_DISMISSED_STORAGE_KEY, StorageScope.APPLICATION, false);
+	}
+
+	private _setExhaustedDismissed(): void {
+		this._storageService.store(QUOTA_EXHAUSTED_DISMISSED_STORAGE_KEY, true, StorageScope.APPLICATION, StorageTarget.MACHINE);
+	}
+
+	private _clearExhaustedDismissed(): void {
+		this._storageService.remove(QUOTA_EXHAUSTED_DISMISSED_STORAGE_KEY, StorageScope.APPLICATION);
 	}
 }
