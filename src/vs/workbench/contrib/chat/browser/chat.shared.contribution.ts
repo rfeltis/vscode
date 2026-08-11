@@ -135,6 +135,7 @@ import { PromptsDebugContribution } from './promptsDebugContribution.js';
 import { AgentHostChatDebugContribution } from './chatDebug/agentHostChatDebugProvider.js';
 import { ChatDebugEditorInput, ChatDebugEditorInputSerializer } from './chatDebug/chatDebugEditorInput.js';
 import './agentSessions/agentSessions.contribution.js';
+import './onboarding/chatModelPickerTourContribution.js';
 
 import { ChatContextKeys } from '../common/actions/chatContextKeys.js';
 
