@@ -314,7 +314,6 @@ export class ModelPickerWidget extends Disposable {
 		// The container groups the individual buttons; only the buttons should be
 		// tab stops, not the container itself.
 		this._domNode.tabIndex = -1;
-		this._register(markOnboardingTarget(this._domNode, CHAT_MODEL_PICKER_ONBOARDING_TARGET_ID));
 
 		// Apply initial collapsed state now that _domNode exists
 		if (this._compact?.get()) {
@@ -327,6 +326,9 @@ export class ModelPickerWidget extends Disposable {
 		this._nameButton.setAttribute('role', 'button');
 		this._nameButton.setAttribute('aria-haspopup', 'true');
 		this._nameButton.setAttribute('aria-expanded', 'false');
+		this._register(markOnboardingTarget(this._nameButton, CHAT_MODEL_PICKER_ONBOARDING_TARGET_ID, {
+			open: () => this.show(this._nameButton),
+		}));
 
 		// Combined configuration button (conditionally visible): opens a single
 		// dropdown with Thinking Effort and Context Size sections.
