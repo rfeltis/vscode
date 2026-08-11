@@ -327,7 +327,7 @@ export class ModelPickerWidget extends Disposable {
 		this._nameButton.setAttribute('aria-haspopup', 'true');
 		this._nameButton.setAttribute('aria-expanded', 'false');
 		this._register(markOnboardingTarget(this._nameButton, CHAT_MODEL_PICKER_ONBOARDING_TARGET_ID, {
-			open: () => this.show(this._nameButton),
+			open: () => this.show(this._nameButton, true),
 		}));
 
 		// Combined configuration button (conditionally visible): opens a single
@@ -431,7 +431,7 @@ export class ModelPickerWidget extends Disposable {
 		});
 	}
 
-	show(anchor?: HTMLElement): void {
+	show(anchor?: HTMLElement, expandOtherModels = false): void {
 		const anchorElement = anchor ?? this._domNode;
 		if (!anchorElement || this._domNode?.classList.contains('disabled')) {
 			return;
@@ -548,7 +548,7 @@ export class ModelPickerWidget extends Disposable {
 			showFilter: !unavailable,
 			filterPlaceholder: localize('chat.modelPicker.search', "Search models"),
 			focusFilterOnOpen: true,
-			collapsedByDefault: new Set([ModelPickerSection.Other]),
+			collapsedByDefault: expandOtherModels ? undefined : new Set([ModelPickerSection.Other]),
 			onDidToggleSection: (section: string, collapsed: boolean) => {
 				if (section === ModelPickerSection.Other) {
 					logModelPickerInteraction(collapsed ? 'otherModelsCollapsed' : 'otherModelsExpanded');
