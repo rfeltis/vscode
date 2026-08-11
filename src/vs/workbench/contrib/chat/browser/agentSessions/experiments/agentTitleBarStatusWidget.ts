@@ -44,6 +44,8 @@ import { WindowTitle } from '../../../../../browser/parts/titlebar/windowTitle.j
 import { ChatAIDisabledSettingId, ChatConfiguration } from '../../../common/constants.js';
 import { IChatEntitlementService } from '../../../../../services/chat/common/chatEntitlementService.js';
 import { IChatWidgetService } from '../../chat.js';
+import { TOGGLE_CHAT_ACTION_ID } from '../../actions/chatActions.js';
+import { ChatModelPickerTourArmedContext } from '../../onboarding/chatModelPickerTour.js';
 import { ITelemetryService } from '../../../../../../platform/telemetry/common/telemetry.js';
 import { ITitleService } from '../../../../../services/title/browser/titleService.js';
 
@@ -72,7 +74,6 @@ type AgentStatusClickClassification = {
 };
 
 // Action IDs
-const TOGGLE_CHAT_ACTION_ID = 'workbench.action.chat.toggle';
 const QUICK_OPEN_ACTION_ID = 'workbench.action.quickOpenWithModes';
 
 // Storage key for filter state
@@ -227,7 +228,7 @@ export class AgentTitleBarStatusWidget extends BaseActionViewItem {
 
 		// Re-render when Zen mode toggles, to hide all agent distractions
 		this._register(this.contextKeyService.onDidChangeContext(e => {
-			if (e.affectsSome(new Set([InEditorZenModeContext.key]))) {
+			if (e.affectsSome(new Set([InEditorZenModeContext.key, ChatModelPickerTourArmedContext.key]))) {
 				this._lastRenderState = undefined; // Force re-render
 				this._render();
 			}
@@ -864,8 +865,12 @@ export class AgentTitleBarStatusWidget extends BaseActionViewItem {
 		const menuActions: IAction[] = Separator.join(...this._chatTitleBarMenu.getActions({ shouldForwardArgs: true }).map(([, actions]) => actions));
 
 		const primaryActionId = TOGGLE_CHAT_ACTION_ID;
-		const primaryActionTitle = localize('toggleChat', "Toggle Chat");
+		const modelPickerTourArmed = ChatModelPickerTourArmedContext.getValue(this.contextKeyService);
+		const primaryActionTitle = modelPickerTourArmed
+			? localize('toggleChat.modelPickerTourArmed', "Toggle Chat, new: your favorite model is available")
+			: localize('toggleChat', "Toggle Chat");
 		const primaryActionIcon = Codicon.chatSparkle;
+		sparkleContainer.classList.toggle('model-picker-tour-armed', modelPickerTourArmed);
 
 		// Create primary action
 		const primaryAction = this.instantiationService.createInstance(MenuItemAction, {

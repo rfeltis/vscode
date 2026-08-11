@@ -385,8 +385,20 @@
 }
 
 .agent-status-badge-section.sparkle .action-container {
+	position: relative;
 	padding: 0 5px;
 	border-radius: 5px 0 0 5px;
+}
+
+.agent-status-badge-section.sparkle.model-picker-tour-armed .action-container::after {
+	content: '';
+	position: absolute;
+	top: var(--vscode-spacing-size20);
+	right: var(--vscode-spacing-size20);
+	width: var(--vscode-spacing-size60);
+	height: var(--vscode-spacing-size60);
+	border-radius: var(--vscode-cornerRadius-circle);
+	background-color: var(--vscode-activityBarBadge-background);
 }
 
 /* In compact mode, no left radius on sparkle - it sits flush next to other sections */

@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { localize } from '../../../../../nls.js';
-import { ContextKeyExpr } from '../../../../../platform/contextkey/common/contextkey.js';
+import { ContextKeyExpr, RawContextKey } from '../../../../../platform/contextkey/common/contextkey.js';
 import { IOnboardingScenario } from '../../../onboarding/common/onboardingScenario.js';
 import { ISpotlightPayload, SPOTLIGHT_PRESENTATION_KIND } from '../../../onboarding/browser/spotlight/spotlightTypes.js';
 import { ChatContextKeys } from '../../common/actions/chatContextKeys.js';
@@ -15,6 +15,9 @@ export const CHAT_MODEL_PICKER_TOUR_ARM_COMMAND_ID = 'workbench.action.chat.armM
 
 /** Stable scenario id for the chat model-picker spotlight tour. */
 export const CHAT_MODEL_PICKER_TOUR_ID = 'chat.onboarding.modelPicker';
+
+/** Whether the model-picker tour is waiting for the user to open Chat. */
+export const ChatModelPickerTourArmedContext = new RawContextKey<boolean>('chatModelPickerTourArmed', false);
 
 const modelPickerTourPayload: ISpotlightPayload = {
 	steps: [
